@@ -1,0 +1,45 @@
+device: cuda:1
+model_name: tiny_vit # [cifar10, cifar100, tiny_vit, vit-small] 
+dataset_name: IN100 # [CIFAR10, CIFAR100, CIFAR10C, TinyImageNet, IN100, shakespeare]
+batch_size: 32
+epoch: 2
+n_client: 200
+alg_name: FedAvgReg # [FedAvg, FedAvgReg, FedDyn, FedProx, FedSpeed]
+com_amount: 500
+save_period: 100
+unbalanced_sgm: 0
+logdir: "./logs/"
+rule: Dirichlet # [Dirichlet, iid]
+rule_arg: 0.3
+log_file_name: null
+mu: 0.0001
+mu_var: 0.0
+alpha_coef: 0.05
+act_prob: 0.05
+wsm: 0
+lr_decay_per_round: 0.998
+learning_rate: 0.01
+weight_decay: 0.001
+temp: 2.0
+dist_beta_kl: 1.0
+dist_beta: 1.0
+hloss: 0
+entropy_flag: 1
+uniform_distill: 1
+ntd: 0
+breg_div: 0
+disco: 0
+disco_diff_measure: kl
+disco_a: 0.1
+disco_b: 0.5
+img_size: (224, 224)
+add_reg: 0 # Enable ASD
+lamda: 2.0 # ASD loss scale factor
+seed: 2024
+data_pkl: "dir_0.3_imagenet_data.pkl"
+# Add SAM/ASAM
+sam: 0
+asam: 0
+# Load from saved model checkpoint
+use_checkpoint: 1
+restart_round: 100
