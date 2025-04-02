@@ -1013,7 +1013,7 @@ def train_FedAvgReg(data_obj, act_prob, learning_rate, batch_size, epoch, com_am
                 # model = torch.nn.DataParallel(model)
                 
                 tmp_loss, tmp_acc = get_acc_loss(data_loader_dict, model, data_obj.dataset)
-                print(f'clnt acc: {tmp_acc}, clnt loss: {tmp_loss}')
+                # print(f'clnt acc: {tmp_acc}, clnt loss: {tmp_loss}')
                 
                 for params in model.parameters():
                     params.requires_grad = True

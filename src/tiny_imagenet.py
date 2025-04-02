@@ -4,34 +4,37 @@ import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 from PIL import Image
-import os
-import sys
+import os, sys
 import pickle
 from collections import defaultdict
 import random
-import logging
+# import logging
 import torch.utils.data as data
+from utils_general import Config
 
 
-logging.basicConfig()
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# logging.basicConfig()
+# logger = logging.getLogger()
+# logger.setLevel(logging.INFO)
 
-n_parties=200
-batch_size=32
-cls_num=10
-img_size=224
+cfg = Config('config.yml')
+
+n_parties=cfg['n_client']
+batch_size=cfg['batch_size']
+cls_num=100
+img_size=cfg['img_size']
+
 
 class tinyImageNetDataset(Dataset):
     def __init__(self, train=True, transform=None, return_index=False, dataidxs=None, base_dir=None):
         self.base_path=base_dir
+        self.image_paths=[]
+        self.labels=[]
         self.dirlist=os.listdir(base_dir + ('/train' if train else '/test'))
         if(train):
             self.base_path=self.base_path+"/train"
         else:
             self.base_path=self.base_path+"/test"
-        self.image_paths=[]
-        self.labels=[]
         for dir in self.dirlist:
             root_path=self.base_path+f"/{dir}"
             imgs=os.listdir(root_path)
@@ -201,7 +204,7 @@ def dirichlet_partition(n_client,prior_cumsum,data_y,n_cls,n_data_per_clnt):
     return net_dataidx_map
 
 
-def get_tinyimagenet_dataloader(dataidxs_train, dataidxs_test,noise_level=0, drop_last=False, apply_noise=False):
+def get_tinyimagenet_dataloader(dataidxs_train, dataidxs_test,noise_level=0, drop_last=False, apply_noise=False, base_dir=None):
     train_bs = batch_size
     test_bs =  batch_size
     dl_obj=tinyImageNetDataset
@@ -229,33 +232,34 @@ def get_tinyimagenet_dataloader(dataidxs_train, dataidxs_test,noise_level=0, dro
             transforms.Resize((img_size, img_size)),
             transforms.ToTensor(),
             transforms.Normalize((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2762))])
-    train_ds = dl_obj(train=True, transform=transform_train,return_index=True,dataidxs=dataidxs_train )
-    test_ds = dl_obj(train=False, transform=transform_test,return_index=False,dataidxs= dataidxs_test)
+    train_ds = dl_obj(train=True, transform=transform_train,return_index=True,dataidxs=dataidxs_train, base_dir=base_dir)
+    test_ds = dl_obj(train=False, transform=transform_test,return_index=False,dataidxs= dataidxs_test, base_dir=base_dir)
 
     train_dl = data.DataLoader(dataset=train_ds, batch_size=train_bs, shuffle=True, drop_last=drop_last)
     test_dl = data.DataLoader(dataset=test_ds, batch_size=test_bs, shuffle=False, drop_last=False)
 
     return train_dl, test_dl
 
-partition = 'Dirichlet'
-arr=np.arange(n_parties)
-if partition == 'pl':
-   net_dataidx_map_train, net_dataidx_map_test = partition_tinyimagenet_data(base_dir=sys.argv[1])
-elif partition == 'Dirichlet':
-   net_dataidx_map_train, net_dataidx_map_test = get_dirichlet_partition_tinyimagenet_dataloader(200, rule_arg=0.3, base_dir=sys.argv[1])
+if __name__ == "__main__":
+    partition = cfg['rule']
+    arr=np.arange(n_parties)
+    if partition == 'pl':
+        net_dataidx_map_train, net_dataidx_map_test = partition_tinyimagenet_data(base_dir=sys.argv[1])
+    elif partition == 'Dirichlet':
+        net_dataidx_map_train, net_dataidx_map_test = get_dirichlet_partition_tinyimagenet_dataloader(n_parties, rule_arg=cfg['rule_arg'], base_dir=sys.argv[1])
 
-data_loader_dict = {}
-for net_id in arr:
-   dataidxs_train = net_dataidx_map_train[net_id]
-   dataidxs_test = net_dataidx_map_test[net_id]
-   data_loader_dict[net_id] = {}
-   train_dl_local, test_dl_local = get_tinyimagenet_dataloader(dataidxs_train, dataidxs_test)
-   data_loader_dict[net_id]['train_dl_local'] = train_dl_local
-   data_loader_dict[net_id]['test_dl_local'] = test_dl_local
+    data_loader_dict = {}
+    for net_id in arr:
+        dataidxs_train = net_dataidx_map_train[net_id]
+        dataidxs_test = net_dataidx_map_test[net_id]
+        data_loader_dict[net_id] = {}
+        train_dl_local, test_dl_local = get_tinyimagenet_dataloader(dataidxs_train, dataidxs_test, base_dir=sys.argv[1])
+        data_loader_dict[net_id]['train_dl_local'] = train_dl_local
+        data_loader_dict[net_id]['test_dl_local'] = test_dl_local
 
-mapping_dict={}
-mapping_dict['dataloader']=data_loader_dict
-mapping_dict['train']=net_dataidx_map_train
+    mapping_dict={}
+    mapping_dict['dataloader']=data_loader_dict
+    mapping_dict['train']=net_dataidx_map_train
 
-with open("dir_0.3_imagenet_data.pkl","wb") as f:
-   pickle.dump(mapping_dict,f)
+    with open(cfg['data_pkl'],"wb") as f:
+        pickle.dump(mapping_dict,f)
