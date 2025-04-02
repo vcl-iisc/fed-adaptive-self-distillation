@@ -59,7 +59,8 @@ def main():
         n_client=args.n_client, 
         unbalanced_sgm=args.unbalanced_sgm,
         rule=args.rule, 
-        rule_arg=args.rule_arg
+        rule_arg=args.rule_arg,
+        args=args
     )
 
     # Common config
@@ -80,12 +81,14 @@ def main():
     
     print("args.alg_name:", alg_name)
 
-    model_func = lambda pretrained=False: client_model(model_name, pretrained)
+    model_func = lambda pretrained=False: client_model(model_name, pretrained, args)
     init_model = model_func()
     # init_model = torch.nn.DataParallel(init_model)
 
     if not os.path.exists('Output/%s/%s_init_mdl.pt' % (data_obj.name, model_name)):
         print("New directory!")
+        if not os.path.isdir('Output'):
+            os.mkdir('Output')
         os.mkdir('Output/%s/' % (data_obj.name))
         torch.save(init_model.state_dict(), 'Output/%s/%s_init_mdl.pt' % (data_obj.name, model_name))
     else:

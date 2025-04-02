@@ -1,7 +1,7 @@
 from utils_libs import *
 
 class DatasetObject:
-    def __init__(self, dataset, n_client, rule, unbalanced_sgm=0, rule_arg=''):
+    def __init__(self, dataset, n_client, rule, unbalanced_sgm=0, rule_arg='', args=None):
         self.dataset  = dataset
         self.n_client = n_client
         self.n_cls = 100
@@ -13,7 +13,37 @@ class DatasetObject:
         self.unbalanced_sgm = unbalanced_sgm
         self.data_path = 'Data'
         self.cifar10c_dp = 'Data/CIFAR-10-C/'
+        self.args = args
         self.set_data()
+        
+    ###
+    def separateDatasetIntoTestAndTrain(self, train_dataset, test_dataset, root_dir, dataset_name):
+        train_dir = os.path.join(root_dir, dataset_name, "train")
+        test_dir = os.path.join(root_dir, dataset_name, "test")
+
+        os.makedirs(train_dir, exist_ok=True)
+        os.makedirs(test_dir, exist_ok=True)
+
+        train_data = train_dataset.data
+        train_targets = np.array(train_dataset.targets)
+        test_data = test_dataset.data
+        test_targets = np.array(test_dataset.targets)
+        class_names = train_dataset.classes
+
+        for i, target in enumerate(train_targets):
+            class_dir = os.path.join(train_dir, class_names[target])
+            os.makedirs(class_dir, exist_ok=True)
+            filename = f"{i}.png"
+            filepath = os.path.join(class_dir, filename)
+            Image.fromarray(train_data[i]).save(filepath)
+
+        for i, target in enumerate(test_targets):
+            class_dir = os.path.join(test_dir, class_names[target])
+            os.makedirs(class_dir, exist_ok=True)
+            filename = f"{i}.png"
+            filepath = os.path.join(class_dir, filename)
+            Image.fromarray(test_data[i]).save(filepath)
+    ###
 
     def set_data(self):
         # Prepare data if not ready
@@ -30,8 +60,12 @@ class DatasetObject:
                 tstset = datasets.MNIST(root='%s/Raw' %self.data_path,
                                                     train=False, download=True, transform=transform)
 
-                trn_load = torch.utils.data.DataLoader(trnset, batch_size=60000, shuffle=False, num_workers=1)
-                tst_load = torch.utils.data.DataLoader(tstset, batch_size=10000, shuffle=False, num_workers=1)
+                ###
+                separateDatasetIntoTestAndTrain(trnset, tstset, self.args.datadir, self.dataset)
+                ###
+
+                # trn_load = torch.utils.data.DataLoader(trnset, batch_size=60000, shuffle=False, num_workers=1)
+                # tst_load = torch.utils.data.DataLoader(tstset, batch_size=10000, shuffle=False, num_workers=1)
                 self.channels = 1; self.width = 28; self.height = 28; self.n_cls = 10;
 
             if self.dataset == 'CIFAR10':
@@ -43,80 +77,84 @@ class DatasetObject:
                 tstset = datasets.CIFAR10(root='%s/Raw' %self.data_path,
                                                       train=False, download=True, transform=transform)
 
-                trn_load = torch.utils.data.DataLoader(trnset, batch_size=50000, shuffle=False, num_workers=1)
-                tst_load = torch.utils.data.DataLoader(tstset, batch_size=10000, shuffle=False, num_workers=1)
+                ###
+                separateDatasetIntoTestAndTrain(trnset, tstset, self.args.datadir, self.dataset)
+                ###
+
+                # trn_load = torch.utils.data.DataLoader(trnset, batch_size=50000, shuffle=False, num_workers=1)
+                # tst_load = torch.utils.data.DataLoader(tstset, batch_size=10000, shuffle=False, num_workers=1)
                 self.channels = 3
                 self.width = 32
                 self.height = 32
                 self.n_cls = 10
 
-            if self.dataset == 'CIFAR10C':
-                cifar_corrupt_trn =  np.load('Data/CIFAR-10-C/Train/gaussian_noise.npy')
-                cifar_corrupt_trn_labels = np.load('Data/CIFAR-10-C/Train/labels.npy')
+            # if self.dataset == 'CIFAR10C':
+            #     cifar_corrupt_trn =  np.load('Data/CIFAR-10-C/Train/gaussian_noise.npy')
+            #     cifar_corrupt_trn_labels = np.load('Data/CIFAR-10-C/Train/labels.npy')
 
-                cifar_corrupt_tst =  np.load('Data/CIFAR-10-C/Test/gaussian_noise.npy')
-                cifar_corrupt_tst_labels =  np.load('Data/CIFAR-10-C/Test/labels.npy')
+            #     cifar_corrupt_tst =  np.load('Data/CIFAR-10-C/Test/gaussian_noise.npy')
+            #     cifar_corrupt_tst_labels =  np.load('Data/CIFAR-10-C/Test/labels.npy')
 
-                cifar_train = np.load('Data/CIFAR-10-C/Train/clean_train_images.npy')
-                cifar_train_labels = np.load('Data/CIFAR-10-C/Train/clean_train_labels.npy')
+            #     cifar_train = np.load('Data/CIFAR-10-C/Train/clean_train_images.npy')
+            #     cifar_train_labels = np.load('Data/CIFAR-10-C/Train/clean_train_labels.npy')
 
-                cifar_test = np.load('Data/CIFAR-10-C/Test/clean_test_images.npy')
-                cifar_test_labels = np.load('Data/CIFAR-10-C/Test/clean_test_labels.npy')
+            #     cifar_test = np.load('Data/CIFAR-10-C/Test/clean_test_images.npy')
+            #     cifar_test_labels = np.load('Data/CIFAR-10-C/Test/clean_test_labels.npy')
 
-                trn_d1 = cifar_train[:10000];trn_d2 = cifar_corrupt_trn[60000:70000];trn_d3 = cifar_corrupt_trn[120000:130000]
-                trn_d4 = cifar_corrupt_trn[180000:190000];trn_d5 = cifar_corrupt_trn[240000:250000]
+            #     trn_d1 = cifar_train[:10000];trn_d2 = cifar_corrupt_trn[60000:70000];trn_d3 = cifar_corrupt_trn[120000:130000]
+            #     trn_d4 = cifar_corrupt_trn[180000:190000];trn_d5 = cifar_corrupt_trn[240000:250000]
 
-                trn_l1 = cifar_train_labels[:10000].reshape(-1);trn_l2 = cifar_corrupt_trn_labels[60000:70000];
-                trn_l3 = cifar_corrupt_trn_labels[120000:130000];trn_l4 = cifar_corrupt_trn_labels[180000:190000]
-                trn_l5 = cifar_corrupt_trn_labels[240000:250000]
+            #     trn_l1 = cifar_train_labels[:10000].reshape(-1);trn_l2 = cifar_corrupt_trn_labels[60000:70000];
+            #     trn_l3 = cifar_corrupt_trn_labels[120000:130000];trn_l4 = cifar_corrupt_trn_labels[180000:190000]
+            #     trn_l5 = cifar_corrupt_trn_labels[240000:250000]
 
-                train_images = np.concatenate([trn_d1,trn_d2,trn_d3,trn_d4,trn_d5],axis = 0)
-                train_labels = np.concatenate([trn_l1,trn_l2,trn_l3,trn_l4,trn_l5],axis = 0)
+            #     train_images = np.concatenate([trn_d1,trn_d2,trn_d3,trn_d4,trn_d5],axis = 0)
+            #     train_labels = np.concatenate([trn_l1,trn_l2,trn_l3,trn_l4,trn_l5],axis = 0)
 
 
 
-                tst_d1 = cifar_test[:2000];tst_d2 = cifar_corrupt_tst[2000:4000];tst_d3 = cifar_corrupt_tst[4000:6000]
-                tst_d4 = cifar_corrupt_tst[6000:8000];tst_d5 = cifar_corrupt_tst[8000:10000]
+            #     tst_d1 = cifar_test[:2000];tst_d2 = cifar_corrupt_tst[2000:4000];tst_d3 = cifar_corrupt_tst[4000:6000]
+            #     tst_d4 = cifar_corrupt_tst[6000:8000];tst_d5 = cifar_corrupt_tst[8000:10000]
 
-                tst_l1 = cifar_test_labels[:2000].reshape(-1);tst_l2 = cifar_corrupt_tst_labels[2000:4000];
-                tst_l3 = cifar_corrupt_tst_labels[4000:6000];tst_l4 = cifar_corrupt_tst_labels[6000:8000]
-                tst_l5 = cifar_corrupt_tst_labels[8000:10000]
+            #     tst_l1 = cifar_test_labels[:2000].reshape(-1);tst_l2 = cifar_corrupt_tst_labels[2000:4000];
+            #     tst_l3 = cifar_corrupt_tst_labels[4000:6000];tst_l4 = cifar_corrupt_tst_labels[6000:8000]
+            #     tst_l5 = cifar_corrupt_tst_labels[8000:10000]
 
-                test_images = np.concatenate([tst_d1,tst_d2,tst_d3,tst_d4,tst_d5],axis = 0)
-                test_labels = np.concatenate([tst_l1,tst_l2,tst_l3,tst_l4,tst_l5],axis = 0)
+            #     test_images = np.concatenate([tst_d1,tst_d2,tst_d3,tst_d4,tst_d5],axis = 0)
+            #     test_labels = np.concatenate([tst_l1,tst_l2,tst_l3,tst_l4,tst_l5],axis = 0)
 
-                train_images_ = train_images.reshape(-1,3)/255.0
-                test_images_ = test_images.reshape(-1,3)/255.0
+            #     train_images_ = train_images.reshape(-1,3)/255.0
+            #     test_images_ = test_images.reshape(-1,3)/255.0
 
-                mean_vec = np.mean(train_images_,axis = 0)
-                std_vec = np.std(train_images_,axis = 0)
+            #     mean_vec = np.mean(train_images_,axis = 0)
+            #     std_vec = np.std(train_images_,axis = 0)
 
-                train_images_ = (train_images_ - mean_vec)/std_vec
-                test_images_ = (test_images_ - mean_vec)/std_vec
+            #     train_images_ = (train_images_ - mean_vec)/std_vec
+            #     test_images_ = (test_images_ - mean_vec)/std_vec
 
-                train_images = train_images_.reshape(train_images.shape)
-                test_images = test_images_.reshape(test_images.shape)
+            #     train_images = train_images_.reshape(train_images.shape)
+            #     test_images = test_images_.reshape(test_images.shape)
 
-                train_images = torch.Tensor(train_images)
-                test_images = torch.Tensor(test_images)
-                train_labels = torch.Tensor(train_labels)
-                test_labels = torch.Tensor(test_labels)
+            #     train_images = torch.Tensor(train_images)
+            #     test_images = torch.Tensor(test_images)
+            #     train_labels = torch.Tensor(train_labels)
+            #     test_labels = torch.Tensor(test_labels)
 
-                train_images = np.transpose(train_images,[0,3,1,2])
-                test_images = np.transpose(test_images,[0,3,1,2])
+            #     train_images = np.transpose(train_images,[0,3,1,2])
+            #     test_images = np.transpose(test_images,[0,3,1,2])
 
-                trnset = TensorDataset(train_images,train_labels)
-                #train_dl = DataLoader(train_ds)
+            #     trnset = TensorDataset(train_images,train_labels)
+            #     #train_dl = DataLoader(train_ds)
 
-                tstset = TensorDataset(test_images,test_labels)
-                #test_dl = DataLoader(test_ds)
+            #     tstset = TensorDataset(test_images,test_labels)
+            #     #test_dl = DataLoader(test_ds)
 
-                trn_load = torch.utils.data.DataLoader(trnset, batch_size=50000, shuffle=False, num_workers=1)
-                tst_load = torch.utils.data.DataLoader(tstset, batch_size=10000, shuffle=False, num_workers=1)
-                self.channels = 3
-                self.width = 32
-                self.height = 32
-                self.n_cls = 10
+            #     trn_load = torch.utils.data.DataLoader(trnset, batch_size=50000, shuffle=False, num_workers=1)
+            #     tst_load = torch.utils.data.DataLoader(tstset, batch_size=10000, shuffle=False, num_workers=1)
+            #     self.channels = 3
+            #     self.width = 32
+            #     self.height = 32
+            #     self.n_cls = 10
 
             if self.dataset == 'CIFAR100':
                 print(self.dataset)
@@ -128,8 +166,13 @@ class DatasetObject:
                                                       train=True , download=True, transform=transform)
                 tstset = datasets.CIFAR100(root='%s/Raw' %self.data_path,
                                                       train=False, download=True, transform=transform)
-                trn_load = torch.utils.data.DataLoader(trnset, batch_size=50000, shuffle=False, num_workers=0)
-                tst_load = torch.utils.data.DataLoader(tstset, batch_size=10000, shuffle=False, num_workers=0)
+                
+                ###
+                self.separateDatasetIntoTestAndTrain(trnset, tstset, self.args.datadir, self.dataset)
+                ###
+                
+                # trn_load = torch.utils.data.DataLoader(trnset, batch_size=50000, shuffle=False, num_workers=0)
+                # tst_load = torch.utils.data.DataLoader(tstset, batch_size=10000, shuffle=False, num_workers=0)
                 self.channels = 3
                 self.width = 32
                 self.height = 32

@@ -3,7 +3,7 @@ from utils_general import Config
 
 ALLOW_VALUES = {
     "model_name": ["cifar10", "cifar100", "tiny_vit", "vit-small"],
-    "dataset_name": ["CIFAR10", "CIFAR100", "CIFAR10C", "TinyImageNet", "IN100", "shakespeare"],
+    "dataset_name": ["CIFAR10", "CIFAR100", "TinyImageNet", "IN100", "shakespeare"],
     "alg_name": ["FedAvg", "FedAvgReg", "FedDyn", "FedProx", "FedSpeed"],
     "rule": ["Dirichlet", "iid"]
 }
@@ -25,9 +25,10 @@ def parse_args():
 
 def validate_args(args):
     for key, value in vars(args).items():
-        allowed = ALLOW_VALUES[key]
-        if isinstance(allowed, list):
-            if value not in allowed:
-                raise ValueError(f'Invalid value for \'{key}\':{value}. Allowed values are: {allowed}')
+        if key in ALLOW_VALUES.keys():
+            allowed = ALLOW_VALUES[key]
+            if isinstance(allowed, list):
+                if value not in allowed:
+                    raise ValueError(f'Invalid value for \'{key}\':{value}. Allowed values are: {allowed}')
     
     print('All arguments are valid.')    

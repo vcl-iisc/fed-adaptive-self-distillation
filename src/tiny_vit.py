@@ -14,10 +14,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
-import timm
-from timm.models.layers import DropPath as TimmDropPath,\
-    to_2tuple, trunc_normal_
-from timm.models.registry import register_model
+import timm 
+from timm.layers import DropPath as TimmDropPath, to_2tuple, trunc_normal_
+from timm.models import register_model
 try:
     # timm.__version__ >= "0.6"
     from timm.models._builder import build_model_with_cfg
@@ -622,6 +621,7 @@ def _create_tiny_vit(variant, pretrained=False, **kwargs):
         'pretrained_type should be one of 22kto1k_distill, 1k, 22k_distill'
 
     img_size = kwargs.get('img_size', 224)
+
     if img_size != 224:
         pretrained_type = pretrained_type.replace('_', f'_{img_size}_')
 
@@ -682,19 +682,19 @@ def _create_tiny_vit(variant, pretrained=False, **kwargs):
 #     model_kwargs.update(kwargs)
 #     return _create_tiny_vit('tiny_vit_11m_224', pretrained, **model_kwargs)
 
-
-@register_model
-def tiny_vit_21m_224(pretrained=False, **kwargs):
-    model_kwargs = dict(
-        embed_dims=[96, 192, 384, 576],
-        depths=[2, 2, 6, 2],
-        num_heads=[3, 6, 12, 18],
-        window_sizes=[7, 7, 14, 7],
-        drop_path_rate=0.2,
-    )
-    model_kwargs.update(kwargs)
-    return _create_tiny_vit('tiny_vit_21m_224', pretrained, **model_kwargs)
-
+model_name = "tiny_vit_21m_224_custom"
+if model_name not in timm.list_models():
+    @register_model
+    def tiny_vit_21m_224_custom(pretrained=False, **kwargs):
+        model_kwargs = dict(
+            embed_dims=[96, 192, 384, 576],
+            depths=[2, 2, 6, 2],
+            num_heads=[3, 6, 12, 18],
+            window_sizes=[7, 7, 14, 7],
+            drop_path_rate=0.2,
+        )
+        model_kwargs.update(kwargs)
+        return _create_tiny_vit('tiny_vit_21m_224', pretrained, **model_kwargs)
 
 # @register_model
 # def tiny_vit_21m_384(pretrained=False, **kwargs):

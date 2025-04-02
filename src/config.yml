@@ -1,14 +1,15 @@
 device: cuda:1
-model_name: tiny_vit # [cifar10, cifar100, tiny_vit, vit-small] 
-dataset_name: IN100 # [CIFAR10, CIFAR100, CIFAR10C, TinyImageNet, IN100, shakespeare]
+model_name: vit-small # [cifar10, cifar100, tiny_vit, vit-small] 
+dataset_name: CIFAR100 # [CIFAR10, CIFAR100, CIFAR10C, TinyImageNet, IN100, shakespeare]
 batch_size: 32
 epoch: 2
-n_client: 200
+n_client: 100
 alg_name: FedAvgReg # [FedAvg, FedAvgReg, FedDyn, FedProx, FedSpeed]
 com_amount: 500
 save_period: 100
 unbalanced_sgm: 0
 logdir: "./logs/"
+datadir: "./Data"
 rule: Dirichlet # [Dirichlet, iid]
 rule_arg: 0.3
 log_file_name: null
@@ -32,14 +33,19 @@ disco: 0
 disco_diff_measure: kl
 disco_a: 0.1
 disco_b: 0.5
-img_size: (224, 224)
+img_size: 32
 add_reg: 0 # Enable ASD
 lamda: 2.0 # ASD loss scale factor
 seed: 2024
-data_pkl: "dir_0.3_imagenet_data.pkl"
+data_pkl: "dir_0.3_cifar100_data.pkl"
+# specific params for VIT
+backbone_arch: 'vit-small'
+embed_feat_dim: 256
+loss_mode: 'sup'
+target_size: 100 # num classes
 # Add SAM/ASAM
 sam: 0
 asam: 0
 # Load from saved model checkpoint
-use_checkpoint: 1
+use_checkpoint: 0
 restart_round: 100

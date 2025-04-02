@@ -1,10 +1,10 @@
 from utils_libs import *
 import torchvision.models as models
-from tiny_vit import tiny_vit_21m_224
+from tiny_vit import tiny_vit_21m_224_custom
 from vits import VITs
 
 class client_model(nn.Module):
-    def __init__(self, name, pretrained, args=True):
+    def __init__(self, name, pretrained, args=None):
         super(client_model, self).__init__()
         self.name = name
         
@@ -15,9 +15,9 @@ class client_model(nn.Module):
         if self.name == 'tiny_vit':
             self.n_cls = 100 # IN-100
             # Load pretrained weights from model trained on IN-1k
-            # self.model = tiny_vit_21m_224(pretrained=True, num_classes=self.n_cls, pretrained_type='1k')
+            # self.model = tiny_vit_21m_224_custom(pretrained=True, num_classes=self.n_cls, pretrained_type='1k')
             # Train from scratch
-            self.model = tiny_vit_21m_224(pretrained=pretrained, num_classes=self.n_cls, pretrained_type='1k', img_size=args.image_size)
+            self.model = tiny_vit_21m_224_custom(pretrained=pretrained, num_classes=self.n_cls, pretrained_type='1k', img_size=args.img_size)
         
         if self.name == 'Linear':
             [self.n_dim, self.n_out] = args
